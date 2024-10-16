@@ -1,0 +1,40 @@
+*{
+    margin:0;
+    padding:0;
+    box-sizing: content-box;
+}
+
+body{
+    background-color:rgb(194, 224, 59);
+}
+.column_space{
+    width:80%;
+    min-height:150px;
+    display:flex;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: flex-start;
+    margin:auto;
+
+    border:1px solid black;
+}
+.column{
+    width:80%;
+    min-height: 100px;
+    margin:15px;
+    padding:10px;
+
+    border:1px solid black;
+}
+.column > p:first-child{
+    text-align:center;
+}
+.list{
+
+}
+.red-text{
+    color:red;
+}
+.btn_add_task{
+    margin:5px
+}

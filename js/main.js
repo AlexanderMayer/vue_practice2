@@ -1,0 +1,517 @@
+let eventBus = new Vue();
+
+Vue.component('list_with_tasks', {
+    props: {
+        list: {
+            type: Object,
+            required: true,
+        },
+        indexOfList: {
+            type: Number,
+            required: true,
+        },
+        column_id: {
+            type: String,
+            required: true,
+        },
+        beDisabled: {
+            type: Boolean,
+            required: true,
+        },
+        block: {
+            type: Boolean,
+            required: true,
+        },
+        buttonDelByColumnFirst: {
+            type: Boolean,
+            required: true,
+        }
+    },
+    data() {
+        return {
+            countInSecond: 0,
+            showInputField: false,
+            showAddTaskButton: false,
+            newTaskName: null,
+        }
+    },
+    template: `
+        <div class="list">
+            <h3>{{list.title}}</h3>
+            <p v-if="list.tasks.task1.name"><input type="checkbox" :disabled="beDisabled  || list.tasks.task1.activity" v-model="list.tasks.task1.activity" @click="checkboxClick">{{list.tasks.task1.name}} <button v-if="buttonDelByColumnFirst" :disabled="!list.buttonDeleteTaskActive" @click="deleteTask(1)">Удалить</button></p>
+            <p v-if="list.tasks.task2.name"><input type="checkbox" :disabled="beDisabled  || list.tasks.task2.activity" v-model="list.tasks.task2.activity" @click="checkboxClick">{{list.tasks.task2.name}} <button v-if="buttonDelByColumnFirst" :disabled="!list.buttonDeleteTaskActive" @click="deleteTask(2)">Удалить</button></p>
+            <p v-if="list.tasks.task3.name"><input type="checkbox" :disabled="beDisabled  || list.tasks.task3.activity" v-model="list.tasks.task3.activity" @click="checkboxClick">{{list.tasks.task3.name}} <button v-if="buttonDelByColumnFirst" :disabled="!list.buttonDeleteTaskActive" @click="deleteTask(3)">Удалить</button></p>
+            <p v-if="list.tasks.task4.name"><input type="checkbox" :disabled="beDisabled  || list.tasks.task4.activity" v-model="list.tasks.task4.activity" @click="checkboxClick">{{list.tasks.task4.name}} <button v-if="buttonDelByColumnFirst" :disabled="!list.buttonDeleteTaskActive" @click="deleteTask(4)">Удалить</button></p>
+            <p v-if="list.tasks.task5.name"><input type="checkbox" :disabled="beDisabled  || list.tasks.task5.activity" v-model="list.tasks.task5.activity" @click="checkboxClick">{{list.tasks.task5.name}} <button v-if="buttonDelByColumnFirst" :disabled="!list.buttonDeleteTaskActive" @click="deleteTask(5)">Удалить</button></p>
+            <p v-if="list.dateOfFinish">{{list.dateOfFinish}}</p>
+
+            <p v-if="showInputField"><input type="type" v-model="newTaskName"><button @click.prevent="insertNewTask">Добавить</button><button @click.prevent="cancelNewTask">Отмена</button></p>
+
+            <button class="btn_add_task" v-if="column_id=='first' && showAddTaskButton" @click.prevent="wantAddTask">Добавить задачу</button>
+
+            <hr>
+        </div>
+    `,
+    methods: {
+        checkboxClick() {
+            setTimeout(() => {
+                let overalCountTasks = 0;
+                let activeCheckboxes = 0;
+                for (let i in this.list.tasks) {
+                    if (this.list.tasks[i].name) {
+                        overalCountTasks++;
+                        if (this.list.tasks[i].activity) {
+                            activeCheckboxes++;
+                        }
+                    }
+                }
+
+                // Создаем глубокую копию списка
+                let copy = JSON.parse(JSON.stringify(this.list));
+
+                if (activeCheckboxes / overalCountTasks === 1) {
+                    if (this.column_id === 'second') {
+                        eventBus.$emit('move-me-to-third', copy);
+                        this.deleteCurrentTask();
+                    }
+
+                } else if (activeCheckboxes / overalCountTasks >= 0.5) {
+                    if (this.column_id === 'first' && this.countInSecond < 5) {
+                        eventBus.$emit('move-me-to-second', copy);
+                        this.deleteCurrentTask();
+                    }
+                }
+            }, 100);
+        },
+
+        deleteCurrentTask() {
+            if (this.indexOfList >= 0) {
+                if (this.column_id === 'first') {
+                    eventBus.$emit('delete-me-from-first', this.indexOfList);
+                } else if (this.column_id === 'second') {
+                    eventBus.$emit('delete-me-from-second', this.indexOfList);
+                }
+            }
+        },
+
+        wantAddTask(){
+            this.showInputField = true;
+        },
+        cancelNewTask(){
+            this.showInputField = false;
+            this.newTaskName= null;
+        },
+        insertNewTask(){
+            for(let task in this.list.tasks){
+                if(this.list.tasks[task].name == null){
+                    this.list.tasks[task].name = this.newTaskName;
+                    this.newTaskName = null;
+                }
+            }
+            this.showInputField= false;
+            this.list.buttonDeleteTaskActive = true;
+            this.checkCountInList();
+        },
+
+        deleteTask(numb){
+            switch(Number(numb)){
+                case 1:
+                    this.list.tasks.task1.name= null;
+                    this.list.tasks.task1.activity= false;
+                    break;
+                case 2:
+                    this.list.tasks.task2.name= null;
+                    this.list.tasks.task2.activity= false;
+                    break;
+                case 3:
+                    this.list.tasks.task3.name= null;
+                    this.list.tasks.task3.activity= false;
+                    break;
+                case 4:
+                    this.list.tasks.task4.name= null;
+                    this.list.tasks.task4.activity= false;
+                    break;
+                case 5:
+                    this.list.tasks.task5.name= null;
+                    this.list.tasks.task5.activity= false;
+                    break;
+            }
+
+            let over=0;
+            let act=0;
+            for (let taskKey in this.list.tasks) {
+                let task = this.list.tasks[taskKey];
+                if (task.activity == true) {
+                    act++;
+                }
+                if (task.name != null) {
+                    over++;
+                }
+            }
+
+            if ((over / act) >= 1.5 && (over / act) <= 2) {
+                let copy = Object.assign({}, this.list);
+                copy.tasks = Object.assign({}, this.list.tasks);
+                for(key in copy.tasks){
+                    copy.tasks[key] = Object.assign({}, this.list.tasks[key]);
+                }
+                eventBus.$emit('just-push-in-second-if-you-can', copy, this.indexOfList);
+            }
+
+            if(over>=4){
+                this.list.buttonDeleteTaskActive = true;
+            }else{
+                this.list.buttonDeleteTaskActive = false;
+            }
+            if(over < 5){
+                this.showAddTaskButton= true;
+            }
+
+        },
+        checkCountInList(){
+            let overalCountTasks = 0;
+            let activeCheckboxes = 0;
+            for (let i in this.list.tasks) {
+                if (this.list.tasks[i].name) {
+                    overalCountTasks++;
+                    if (this.list.tasks[i].activity) {
+                        activeCheckboxes++;
+                    }
+                }
+            }
+            if(overalCountTasks < 5){
+                this.showAddTaskButton = true;
+            }else{
+                this.showAddTaskButton = false;
+            }
+        }
+    },
+    mounted() {
+        this.checkCountInList();
+    }
+})
+
+Vue.component('column', {
+    props: {
+        column_name: {
+            type: String,
+            required: true,
+        },
+        column_id: {
+            type: String,
+            required: true,
+        }
+
+    },
+    data() {
+        return {
+            listsArray: [],
+            beDisabled: false,
+            firstColumnBlock: this.column_id=='first'  ? true : false,
+            buttonDelByColumnFirst: this.column_id=='first' ? true : false ,
+        }
+    },
+    template: `
+        <div class="column">
+            <p>{{column_name}}</p>
+            <div  v-if="listsArray" v-for="(list, index) in listsArray">
+                <list_with_tasks :block="firstColumnBlock" :list="list" :indexOfList="index" :column_id="column_id" :beDisabled="beDisabled" :buttonDelByColumnFirst="buttonDelByColumnFirst"></list_with_tasks>
+            </div>
+        </div>
+    `,
+    mounted() {
+        eventBus.$on('takeFromForm', function (copy) {
+            if (this.column_id == 'first') {
+                this.listsArray.push(copy);
+            }
+        }.bind(this)),
+
+            eventBus.$on('say-me-count-first', function () {
+                if (this.column_id == 'first') {
+                    let len = this.listsArray.length;
+                    eventBus.$emit('say-me-count-first-resp', len);
+                }
+            }.bind(this))
+
+
+        eventBus.$on('move-me-to-second', function (copy) {
+            if (this.column_id == 'second') {
+
+                if (this.listsArray.length < 5) {
+                    this.listsArray.push(copy);
+                    eventBus.$emit('say-me-count-first');
+                } else {
+                    eventBus.$emit('block-first-col');
+                }
+            }
+        }.bind(this)),
+
+            eventBus.$on('block-first-col', function () {
+                if (this.column_id == 'first') {
+                    this.firstColumnBlock = true;
+                    localStorage.setItem('firstColumnBlock', JSON.stringify(this.firstColumnBlock));
+                }
+
+            }.bind(this))
+
+        eventBus.$on('delete-me-from-first', function (index) {
+            if (this.column_id === 'first' && index >= 0 && index < this.listsArray.length) {
+                this.listsArray.splice(index, 1);
+                eventBus.$emit('unblock-form-please');
+            }
+        }.bind(this));
+
+        eventBus.$on('delete-me-from-second', function (index) {
+            if (this.column_id === 'second' && index >= 0 && index < this.listsArray.length) {
+                this.listsArray.splice(index, 1);
+            }
+        }.bind(this));
+
+        eventBus.$on('move-me-to-third', function (copy) {
+            if (this.column_id == 'third') {
+                copy.dateOfFinish = new Date();
+                this.beDisabled = true;
+                this.listsArray.push(copy);
+                eventBus.$emit('unblock-first-col');
+                eventBus.$emit('scan-first-col');
+            }
+        }.bind(this)),
+
+            eventBus.$on('scan-first-col', () => {
+                setTimeout(() => {
+                    if(this.column_id == 'first') {
+                        let index = 0;
+                        for(let i of this.listsArray) {
+                            let over = 0;
+                            let act = 0;
+                            for (let taskKey in i.tasks) {
+                                let task = i.tasks[taskKey];
+                                if (task.activity == true) {
+                                    act++;
+                                }
+                                if (task.name != null) {
+                                    over++;
+                                }
+                            }
+
+                            if ((over / act) >= 1.5 && (over / act) <= 2) {
+                                let copy = Object.assign({}, this.listsArray[index]);
+                                copy.tasks = Object.assign({}, this.listsArray[index].tasks);
+                                for(key in copy.tasks){
+                                    copy.tasks[key] = Object.assign({}, this.listsArray[index].tasks[key]);
+                                }
+                                eventBus.$emit('just-push-in-second', copy);
+                                eventBus.$emit('just-del-in-first', index);
+                            }
+                            index++;
+                        }
+                    }
+                }, 100)
+            })
+
+        eventBus.$on('just-push-in-second', (copy)=>{
+            if(this.column_id =='second'){
+                this.listsArray.push(copy);
+                let arrayForStorrage = this.listsArray.slice();
+                eventBus.$emit('saveMeInStorage', this.column_id, arrayForStorrage)
+            }
+        })
+
+        eventBus.$on('just-push-in-second-if-you-can', (copy, index)=>{
+            if(this.column_id=='second'){
+                if(this.listsArray.length >= 5){
+                    eventBus.$emit('block-first-col');
+                }else{
+                    this.listsArray.push(copy);
+                    eventBus.$emit('just-del-in-first', index);
+                }
+            }
+        })
+
+        eventBus.$on('just-del-in-first', (index)=>{
+            if(this.column_id == 'first'){
+                this.listsArray.splice(index, 1);
+                eventBus.$emit('unblock-form-please');
+
+            }
+        })
+
+        eventBus.$on('unblock-first-col', function () {
+            if (this.column_id == 'first') {
+                if (this.firstColumnBlock) {
+                    this.firstColumnBlock = false;
+                }
+            }
+        }.bind(this))
+
+        eventBus.$on('yes-no-block-form',()=>{
+            if(this.column_id == 'first'){
+                setTimeout(()=>{
+                    if(this.listsArray.length == 3){
+                        eventBus.$emit('block-form-please');
+                    }else{
+                        eventBus.$emit('unblock-form-please');
+                    }
+                }, 100)
+            }
+        })
+
+    },
+})
+
+Vue.component('creator', {
+    template: `
+        <form>
+            <div v-if="errors.length" v-for="er in errors">
+                <p class="red-text">{{er}}</p>
+            </div>
+            <p><b>Заголовок:</b> <input type="text" v-model="blank.title" :disabled="!isActiveForm"></p>
+            <p>Задача - 1: <input type="text" v-model="blank.tasks.task1.name" :disabled="!isActiveForm"></p>
+            <p>Задача - 2: <input type="text" v-model="blank.tasks.task2.name" :disabled="!isActiveForm"></p>
+            <p>Задача - 3: <input type="text" v-model="blank.tasks.task3.name" :disabled="!isActiveForm"></p>
+            <p v-if="!hiddenFlag4">Задача - 4: <input type="text" v-model="blank.tasks.task4.name" :disabled="!isActiveForm"></p>
+            <p v-if="!hiddenFlag5">Задача - 5: <input type="text" v-model="blank.tasks.task5.name" :disabled="!isActiveForm"></p>
+            <button v-if="hiddenFlag5" @click.prevent="addTask">Добавить задачку</button>
+            <button  @click.prevent="customSubmit">Создать лист</button>
+        </form>
+    `,
+    data() {
+        return {
+            hiddenFlag4: true,
+            hiddenFlag5: true,
+            countInFirst: 0,
+            errors: [],
+            isActiveForm: true,
+
+            blank: {
+                title: null,
+                dateOfFinish: null,
+                buttonDeleteTaskActive: false,
+                tasks: {
+                    task1: {
+                        name: null,
+                        activity: false
+                    },
+                    task2: {
+                        name: null,
+                        activity: false
+                    },
+                    task3: {
+                        name: null,
+                        activity: false
+                    },
+                    task4: {
+                        name: null,
+                        activity: false
+                    },
+                    task5: {
+                        name: null,
+                        activity: false
+                    },
+                }
+            }
+        }
+    },
+    methods: {
+        addTask() {
+            if (this.hiddenFlag4) {
+                this.hiddenFlag4 = false;
+            } else {
+                this.hiddenFlag5 = false;
+            }
+        },
+
+
+        customSubmit() {
+            eventBus.$emit('say-me-count-first');
+            this.errors = [];
+
+            if (!this.blank.title) {
+                this.errors.push('Заголовок обязателен.')
+            }
+            let counterValidTasks=0;
+            for(let i in this.blank.tasks){
+                if(this.blank.tasks[i].name){
+                    counterValidTasks++;
+                }
+            }
+            if(counterValidTasks < 3){
+                this.errors.push('Три поля обязательны к заполнению.')
+            }
+
+
+            if (!this.errors.length) {
+                let copy = Object.assign({}, this.blank);
+                copy.tasks = Object.assign({}, this.blank.tasks);
+                for (let i in this.blank.tasks) {
+                    copy.tasks[i] = Object.assign({}, this.blank.tasks[i]);
+                }
+
+                let over=0;
+                for(key in this.blank.tasks){
+                    let asd = this.blank.tasks[key];
+                    if(asd.name){
+                        over++;
+                    }
+                }
+                if(over>=4){
+                    copy.buttonDeleteTaskActive = true;
+                }
+
+                this.blank = {
+                    title: null,
+                    buttonDeleteTaskActive: false,
+                    tasks: {
+                        task1: {
+                            name: null,
+                            activity: false
+                        },
+                        task2: {
+                            name: null,
+                            activity: false
+                        },
+                        task3: {
+                            name: null,
+                            activity: false
+                        },
+                        task4: {
+                            name: null,
+                            activity: false
+                        },
+                        task5: {
+                            name: null,
+                            activity: false
+                        },
+                    }
+                }
+                eventBus.$emit('takeFromForm', copy);
+                eventBus.$emit('yes-no-block-form');
+            }
+        }
+
+    },
+    mounted() {
+        setTimeout(()=>{eventBus.$emit('yes-no-block-form');},100)
+
+
+        eventBus.$on('say-me-count-first-resp', function (len) {
+            this.countInFirst = len;
+
+            if( this.countInFirst ==3){
+                this.isActiveForm = true;
+            }
+        }.bind(this)),
+
+            eventBus.$on('block-form-please', ()=>{
+                this.isActiveForm = false;
+            }),
+
+            eventBus.$on('unblock-form-please', ()=>{
+                this.isActiveForm = true;
+            })
+    }
+})
+
+let app = new Vue({
+    el: '#app',
+})
