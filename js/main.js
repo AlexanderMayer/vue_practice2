@@ -408,6 +408,7 @@ Vue.component('creator', {
                 this.errors.push('Три поля обязательны к заполнению.')
             }
 
+
             if (!this.errors.length) {
                 let copy = Object.assign({}, this.blank);
                 copy.tasks = Object.assign({}, this.blank.tasks);
