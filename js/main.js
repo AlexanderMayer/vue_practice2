@@ -396,7 +396,7 @@ Vue.component('creator', {
             this.errors = [];
 
             if (!this.blank.title) {
-                this.errors.push('Заголовок обязателен.')
+                this.errors.push('Заголовок обязателен к заполнению.')
             }
             let counterValidTasks = 0;
             for (let i in this.blank.tasks) {
