@@ -3,56 +3,39 @@ let eventBus = new Vue();
 Vue.component('list_with_tasks', {
     props: {
         list: {
-            type: Object,
-            required: true,
-        },
-        indexOfList: {
-            type: Number,
-            required: true,
-        },
-        column_id: {
-            type: String,
-            required: true,
-        },
-        beDisabled: {
-            type: Boolean,
-            required: true,
-        },
-        block: {
-            type: Boolean,
-            required: true,
-        },
-        buttonDelByColumnFirst: {
-            type: Boolean,
-            required: true,
+            type: Object, required: true,
+        }, indexOfList: {
+            type: Number, required: true,
+        }, column_id: {
+            type: String, required: true,
+        }, beDisabled: {
+            type: Boolean, required: true,
+        }, block: {
+            type: Boolean, required: true,
+        }, buttonDelByColumnFirst: {
+            type: Boolean, required: true,
         }
-    },
-    data() {
+    }, data() {
         return {
-            countInSecond: 0,
-            showInputField: false,
-            showAddTaskButton: false,
-            newTaskName: null,
+            countInSecond: 0, showInputField: false, showAddTaskButton: false, newTaskName: null,
         }
-    },
-    template: `
+    }, template: `
         <div class="list">
             <h3>{{list.title}}</h3>
-            <p v-if="list.tasks.task1.name"><input type="checkbox" :disabled="beDisabled  || list.tasks.task1.activity" v-model="list.tasks.task1.activity" @click="checkboxClick">{{list.tasks.task1.name}} <button v-if="buttonDelByColumnFirst" :disabled="!list.buttonDeleteTaskActive" @click="deleteTask(1)">Удалить</button></p>
-            <p v-if="list.tasks.task2.name"><input type="checkbox" :disabled="beDisabled  || list.tasks.task2.activity" v-model="list.tasks.task2.activity" @click="checkboxClick">{{list.tasks.task2.name}} <button v-if="buttonDelByColumnFirst" :disabled="!list.buttonDeleteTaskActive" @click="deleteTask(2)">Удалить</button></p>
-            <p v-if="list.tasks.task3.name"><input type="checkbox" :disabled="beDisabled  || list.tasks.task3.activity" v-model="list.tasks.task3.activity" @click="checkboxClick">{{list.tasks.task3.name}} <button v-if="buttonDelByColumnFirst" :disabled="!list.buttonDeleteTaskActive" @click="deleteTask(3)">Удалить</button></p>
-            <p v-if="list.tasks.task4.name"><input type="checkbox" :disabled="beDisabled  || list.tasks.task4.activity" v-model="list.tasks.task4.activity" @click="checkboxClick">{{list.tasks.task4.name}} <button v-if="buttonDelByColumnFirst" :disabled="!list.buttonDeleteTaskActive" @click="deleteTask(4)">Удалить</button></p>
-            <p v-if="list.tasks.task5.name"><input type="checkbox" :disabled="beDisabled  || list.tasks.task5.activity" v-model="list.tasks.task5.activity" @click="checkboxClick">{{list.tasks.task5.name}} <button v-if="buttonDelByColumnFirst" :disabled="!list.buttonDeleteTaskActive" @click="deleteTask(5)">Удалить</button></p>
+            <p v-if="list.tasks.task1.name"><input type="checkbox" :disabled="beDisabled || block || list.tasks.task1.activity" v-model="list.tasks.task1.activity" @click="checkboxClick">{{list.tasks.task1.name}} <button v-if="buttonDelByColumnFirst" :disabled="!list.buttonDeleteTaskActive" @click="deleteTask(1)">Удалить</button></p>
+            <p v-if="list.tasks.task2.name"><input type="checkbox" :disabled="beDisabled || block || list.tasks.task2.activity" v-model="list.tasks.task2.activity" @click="checkboxClick">{{list.tasks.task2.name}} <button v-if="buttonDelByColumnFirst" :disabled="!list.buttonDeleteTaskActive" @click="deleteTask(2)">Удалить</button></p>
+            <p v-if="list.tasks.task3.name"><input type="checkbox" :disabled="beDisabled || block || list.tasks.task3.activity" v-model="list.tasks.task3.activity" @click="checkboxClick">{{list.tasks.task3.name}} <button v-if="buttonDelByColumnFirst" :disabled="!list.buttonDeleteTaskActive" @click="deleteTask(3)">Удалить</button></p>
+            <p v-if="list.tasks.task4.name"><input type="checkbox" :disabled="beDisabled || block || list.tasks.task4.activity" v-model="list.tasks.task4.activity" @click="checkboxClick">{{list.tasks.task4.name}} <button v-if="buttonDelByColumnFirst" :disabled="!list.buttonDeleteTaskActive" @click="deleteTask(4)">Удалить</button></p>
+            <p v-if="list.tasks.task5.name"><input type="checkbox" :disabled="beDisabled || block || list.tasks.task5.activity" v-model="list.tasks.task5.activity" @click="checkboxClick">{{list.tasks.task5.name}} <button v-if="buttonDelByColumnFirst" :disabled="!list.buttonDeleteTaskActive" @click="deleteTask(5)">Удалить</button></p>
             <p v-if="list.dateOfFinish">{{list.dateOfFinish}}</p>
 
-            <p v-if="showInputField"><input type="type" v-model="newTaskName"><button @click.prevent="insertNewTask">Добавить</button><button @click.prevent="cancelNewTask">Отмена</button></p>
+            <p v-if="showInputField"><input type="type" v-model="newTaskName"><button @click.prevent="insertNewTask">Добавить</button><button @click.prevent="cancelNewTask">Отменить</button></p>
 
             <button class="btn_add_task" v-if="column_id=='first' && showAddTaskButton" @click.prevent="wantAddTask">Добавить задачу</button>
 
             <hr>
         </div>
-    `,
-    methods: {
+    `, methods: {
         checkboxClick() {
             setTimeout(() => {
                 let overalCountTasks = 0;
@@ -66,79 +49,72 @@ Vue.component('list_with_tasks', {
                     }
                 }
 
-                // Создаем глубокую копию списка
-                let copy = JSON.parse(JSON.stringify(this.list));
+                let copy = Object.assign({}, this.list);
+                copy.tasks = Object.assign({}, this.list.tasks);
+                for (let i in this.list.tasks) {
+                    copy.tasks[i] = Object.assign({}, this.list.tasks[i]);
+                }
 
-                if (activeCheckboxes / overalCountTasks === 1) {
-                    if (this.column_id === 'second') {
+                if (overalCountTasks / activeCheckboxes == 1) {
+                    if (this.column_id == 'second') {
                         eventBus.$emit('move-me-to-third', copy);
-                        this.deleteCurrentTask();
+                        eventBus.$emit('delete-me-from-second', this.indexOfList);
                     }
 
-                } else if (activeCheckboxes / overalCountTasks >= 0.5) {
-                    if (this.column_id === 'first' && this.countInSecond < 5) {
-                        eventBus.$emit('move-me-to-second', copy);
-                        this.deleteCurrentTask();
+                } else if (overalCountTasks / activeCheckboxes <= 2) {
+                    if (this.column_id == 'first') {
+
+                        if (this.countInSecond < 5) {
+                            eventBus.$emit('move-me-to-second', copy);
+                            eventBus.$emit('delete-me-from-first', this.indexOfList);
+
+                        }
                     }
                 }
             }, 100);
-        },
-
-        deleteCurrentTask() {
-            if (this.indexOfList >= 0) {
-                if (this.column_id === 'first') {
-                    eventBus.$emit('delete-me-from-first', this.indexOfList);
-                } else if (this.column_id === 'second') {
-                    eventBus.$emit('delete-me-from-second', this.indexOfList);
-                }
-            }
-        },
-
-        wantAddTask(){
+        }, wantAddTask() {
             this.showInputField = true;
-        },
-        cancelNewTask(){
+        }, cancelNewTask() {
             this.showInputField = false;
-            this.newTaskName= null;
-        },
-        insertNewTask(){
-            for(let task in this.list.tasks){
-                if(this.list.tasks[task].name == null){
+            this.newTaskName = null;
+        }, insertNewTask() {
+            for (let task in this.list.tasks) {
+                if (this.list.tasks[task].name == null) {
                     this.list.tasks[task].name = this.newTaskName;
                     this.newTaskName = null;
                 }
             }
-            this.showInputField= false;
+            this.showInputField = false;
             this.list.buttonDeleteTaskActive = true;
             this.checkCountInList();
         },
 
-        deleteTask(numb){
-            switch(Number(numb)){
+        deleteTask(numb) {
+            switch (Number(numb)) {
                 case 1:
-                    this.list.tasks.task1.name= null;
-                    this.list.tasks.task1.activity= false;
+                    this.list.tasks.task1.name = null;
+                    this.list.tasks.task1.activity = false;
                     break;
                 case 2:
-                    this.list.tasks.task2.name= null;
-                    this.list.tasks.task2.activity= false;
+                    this.list.tasks.task2.name = null;
+                    this.list.tasks.task2.activity = false;
                     break;
                 case 3:
-                    this.list.tasks.task3.name= null;
-                    this.list.tasks.task3.activity= false;
+                    this.list.tasks.task3.name = null;
+                    this.list.tasks.task3.activity = false;
                     break;
                 case 4:
-                    this.list.tasks.task4.name= null;
-                    this.list.tasks.task4.activity= false;
+                    this.list.tasks.task4.name = null;
+                    this.list.tasks.task4.activity = false;
                     break;
                 case 5:
-                    this.list.tasks.task5.name= null;
-                    this.list.tasks.task5.activity= false;
+                    this.list.tasks.task5.name = null;
+                    this.list.tasks.task5.activity = false;
                     break;
             }
 
-            let over=0;
-            let act=0;
+            let over = 0;
+            let act = 0;
             for (let taskKey in this.list.tasks) {
                 let task = this.list.tasks[taskKey];
                 if (task.activity == true) {
@@ -152,23 +128,22 @@ Vue.component('list_with_tasks', {
             if ((over / act) >= 1.5 && (over / act) <= 2) {
                 let copy = Object.assign({}, this.list);
                 copy.tasks = Object.assign({}, this.list.tasks);
-                for(key in copy.tasks){
+                for (key in copy.tasks) {
                     copy.tasks[key] = Object.assign({}, this.list.tasks[key]);
                 }
                 eventBus.$emit('just-push-in-second-if-you-can', copy, this.indexOfList);
             }
 
-            if(over>=4){
+            if (over >= 4) {
                 this.list.buttonDeleteTaskActive = true;
-            }else{
+            } else {
                 this.list.buttonDeleteTaskActive = false;
             }
-            if(over < 5){
-                this.showAddTaskButton= true;
+            if (over < 5) {
+                this.showAddTaskButton = true;
             }
 
-        },
-        checkCountInList(){
+        }, checkCountInList() {
             let overalCountTasks = 0;
             let activeCheckboxes = 0;
             for (let i in this.list.tasks) {
@@ -179,14 +154,13 @@ Vue.component('list_with_tasks', {
                     }
                 }
             }
-            if(overalCountTasks < 5){
+            if (overalCountTasks < 5) {
                 this.showAddTaskButton = true;
-            }else{
+            } else {
                 this.showAddTaskButton = false;
             }
         }
-    },
-    mounted() {
+    }, mounted() {
         this.checkCountInList();
     }
 })
@@ -194,35 +168,32 @@ Vue.component('list_with_tasks', {
 Vue.component('column', {
     props: {
         column_name: {
-            type: String,
-            required: true,
-        },
-        column_id: {
-            type: String,
-            required: true,
+            type: String, required: true,
+        }, column_id: {
+            type: String, required: true,
         }
 
-    },
-    data() {
+    }, data() {
         return {
-            listsArray: [],
+            listsArray: localStorage[this.column_id] ? JSON.parse(localStorage[this.column_id]) : [],
             beDisabled: false,
-            firstColumnBlock: this.column_id=='first'  ? true : false,
-            buttonDelByColumnFirst: this.column_id=='first' ? true : false ,
+            firstColumnBlock: this.column_id == 'first' ? (localStorage['firstColumnBlock'] ? true : false) : false,
+            buttonDelByColumnFirst: this.column_id == 'first' ? true : false,
         }
-    },
-    template: `
+    }, template: `
         <div class="column">
             <p>{{column_name}}</p>
             <div  v-if="listsArray" v-for="(list, index) in listsArray">
                 <list_with_tasks :block="firstColumnBlock" :list="list" :indexOfList="index" :column_id="column_id" :beDisabled="beDisabled" :buttonDelByColumnFirst="buttonDelByColumnFirst"></list_with_tasks>
             </div>
         </div>
-    `,
-    mounted() {
-        eventBus.$on('takeFromForm', function (copy) {
+    `, mounted() {
+        eventBus.$on('take-from-form', function (copy) {
             if (this.column_id == 'first') {
                 this.listsArray.push(copy);
+
+                let arrayForStorrage = this.listsArray.slice();
+                eventBus.$emit('save-me-in-storage', this.column_id, arrayForStorrage)
             }
         }.bind(this)),
 
@@ -236,13 +207,15 @@ Vue.component('column', {
 
         eventBus.$on('move-me-to-second', function (copy) {
             if (this.column_id == 'second') {
-
                 if (this.listsArray.length < 5) {
                     this.listsArray.push(copy);
                     eventBus.$emit('say-me-count-first');
                 } else {
                     eventBus.$emit('block-first-col');
                 }
+                let arrayForStorrage = this.listsArray.slice();
+                eventBus.$emit('save-me-in-storage', this.column_id, arrayForStorrage)
+
             }
         }.bind(this)),
 
@@ -255,17 +228,24 @@ Vue.component('column', {
             }.bind(this))
 
         eventBus.$on('delete-me-from-first', function (index) {
-            if (this.column_id === 'first' && index >= 0 && index < this.listsArray.length) {
-                this.listsArray.splice(index, 1);
-                eventBus.$emit('unblock-form-please');
+            if (this.column_id == 'first') {
+                if (!this.firstColumnBlock) {
+                    this.listsArray.splice(index, 1);
+                }
+                let arrayForStorrage = this.listsArray.slice();
+                eventBus.$emit('save-me-in-storage', this.column_id, arrayForStorrage)
             }
-        }.bind(this));
+        }.bind(this)),
 
-        eventBus.$on('delete-me-from-second', function (index) {
-            if (this.column_id === 'second' && index >= 0 && index < this.listsArray.length) {
-                this.listsArray.splice(index, 1);
-            }
-        }.bind(this));
+            eventBus.$on('delete-me-from-second', function (index) {
+
+                if (this.column_id == 'second') {
+                    this.listsArray.splice(index, 1);
+
+                    let arrayForStorrage = this.listsArray.slice();
+                    eventBus.$emit('save-me-in-storage', this.column_id, arrayForStorrage)
+                }
+            }.bind(this))
 
         eventBus.$on('move-me-to-third', function (copy) {
             if (this.column_id == 'third') {
@@ -274,14 +254,17 @@ Vue.component('column', {
                 this.listsArray.push(copy);
                 eventBus.$emit('unblock-first-col');
                 eventBus.$emit('scan-first-col');
+
+                let arrayForStorrage = this.listsArray.slice();
+                eventBus.$emit('save-me-in-storage', this.column_id, arrayForStorrage)
             }
         }.bind(this)),
 
             eventBus.$on('scan-first-col', () => {
                 setTimeout(() => {
-                    if(this.column_id == 'first') {
+                    if (this.column_id == 'first') {
                         let index = 0;
-                        for(let i of this.listsArray) {
+                        for (let i of this.listsArray) {
                             let over = 0;
                             let act = 0;
                             for (let taskKey in i.tasks) {
@@ -297,7 +280,7 @@ Vue.component('column', {
                             if ((over / act) >= 1.5 && (over / act) <= 2) {
                                 let copy = Object.assign({}, this.listsArray[index]);
                                 copy.tasks = Object.assign({}, this.listsArray[index].tasks);
-                                for(key in copy.tasks){
+                                for (key in copy.tasks) {
                                     copy.tasks[key] = Object.assign({}, this.listsArray[index].tasks[key]);
                                 }
                                 eventBus.$emit('just-push-in-second', copy);
@@ -309,28 +292,32 @@ Vue.component('column', {
                 }, 100)
             })
 
-        eventBus.$on('just-push-in-second', (copy)=>{
-            if(this.column_id =='second'){
+        eventBus.$on('just-push-in-second', (copy) => {
+            if (this.column_id == 'second') {
                 this.listsArray.push(copy);
                 let arrayForStorrage = this.listsArray.slice();
-                eventBus.$emit('saveMeInStorage', this.column_id, arrayForStorrage)
+                eventBus.$emit('save-me-in-storage', this.column_id, arrayForStorrage)
             }
         })
 
-        eventBus.$on('just-push-in-second-if-you-can', (copy, index)=>{
-            if(this.column_id=='second'){
-                if(this.listsArray.length >= 5){
+        eventBus.$on('just-push-in-second-if-you-can', (copy, index) => {
+            if (this.column_id == 'second') {
+                if (this.listsArray.length >= 5) {
                     eventBus.$emit('block-first-col');
-                }else{
+                } else {
                     this.listsArray.push(copy);
+                    let arrayForStorrage = this.listsArray.slice();
+                    eventBus.$emit('save-me-in-storage', this.column_id, arrayForStorrage)
                     eventBus.$emit('just-del-in-first', index);
                 }
             }
         })
 
-        eventBus.$on('just-del-in-first', (index)=>{
-            if(this.column_id == 'first'){
+        eventBus.$on('just-del-in-first', (index) => {
+            if (this.column_id == 'first') {
                 this.listsArray.splice(index, 1);
+                let arrayForStorrage = this.listsArray.slice();
+                eventBus.$emit('save-me-in-storage', this.column_id, arrayForStorrage)
                 eventBus.$emit('unblock-form-please');
 
             }
@@ -344,12 +331,12 @@ Vue.component('column', {
             }
         }.bind(this))
 
-        eventBus.$on('yes-no-block-form',()=>{
-            if(this.column_id == 'first'){
-                setTimeout(()=>{
-                    if(this.listsArray.length == 3){
+        eventBus.$on('yes-no-block-form', () => {
+            if (this.column_id == 'first') {
+                setTimeout(() => {
+                    if (this.listsArray.length == 3) {
                         eventBus.$emit('block-form-please');
-                    }else{
+                    } else {
                         eventBus.$emit('unblock-form-please');
                     }
                 }, 100)
@@ -371,48 +358,30 @@ Vue.component('creator', {
             <p>Задача - 3: <input type="text" v-model="blank.tasks.task3.name" :disabled="!isActiveForm"></p>
             <p v-if="!hiddenFlag4">Задача - 4: <input type="text" v-model="blank.tasks.task4.name" :disabled="!isActiveForm"></p>
             <p v-if="!hiddenFlag5">Задача - 5: <input type="text" v-model="blank.tasks.task5.name" :disabled="!isActiveForm"></p>
-            <button v-if="hiddenFlag5" @click.prevent="addTask">Добавить задачку</button>
-            <button  @click.prevent="customSubmit">Создать лист</button>
+            <button v-if="hiddenFlag5" @click.prevent="addTask" :disabled="!isActiveForm">Добавить задачу</button>
+            <button  @click.prevent="customSubmit" :disabled="!isActiveForm">Добавить список</button>
         </form>
-    `,
-    data() {
+    `, data() {
         return {
-            hiddenFlag4: true,
-            hiddenFlag5: true,
-            countInFirst: 0,
-            errors: [],
-            isActiveForm: true,
+            hiddenFlag4: true, hiddenFlag5: true, countInFirst: 0, errors: [], isActiveForm: true,
 
             blank: {
-                title: null,
-                dateOfFinish: null,
-                buttonDeleteTaskActive: false,
-                tasks: {
+                title: null, dateOfFinish: null, buttonDeleteTaskActive: false, tasks: {
                     task1: {
-                        name: null,
-                        activity: false
-                    },
-                    task2: {
-                        name: null,
-                        activity: false
-                    },
-                    task3: {
-                        name: null,
-                        activity: false
-                    },
-                    task4: {
-                        name: null,
-                        activity: false
-                    },
-                    task5: {
-                        name: null,
-                        activity: false
+                        name: null, activity: false
+                    }, task2: {
+                        name: null, activity: false
+                    }, task3: {
+                        name: null, activity: false
+                    }, task4: {
+                        name: null, activity: false
+                    }, task5: {
+                        name: null, activity: false
                     },
                 }
             }
         }
-    },
-    methods: {
+    }, methods: {
         addTask() {
             if (this.hiddenFlag4) {
                 this.hiddenFlag4 = false;
@@ -429,13 +398,13 @@ Vue.component('creator', {
             if (!this.blank.title) {
                 this.errors.push('Заголовок обязателен.')
             }
-            let counterValidTasks=0;
-            for(let i in this.blank.tasks){
-                if(this.blank.tasks[i].name){
+            let counterValidTasks = 0;
+            for (let i in this.blank.tasks) {
+                if (this.blank.tasks[i].name) {
                     counterValidTasks++;
                 }
             }
-            if(counterValidTasks < 3){
+            if (counterValidTasks < 3) {
                 this.errors.push('Три поля обязательны к заполнению.')
             }
 
@@ -447,71 +416,65 @@ Vue.component('creator', {
                     copy.tasks[i] = Object.assign({}, this.blank.tasks[i]);
                 }
 
-                let over=0;
-                for(key in this.blank.tasks){
+                let over = 0;
+                for (key in this.blank.tasks) {
                     let asd = this.blank.tasks[key];
-                    if(asd.name){
+                    if (asd.name) {
                         over++;
                     }
                 }
-                if(over>=4){
+                if (over >= 4) {
                     copy.buttonDeleteTaskActive = true;
                 }
 
                 this.blank = {
-                    title: null,
-                    buttonDeleteTaskActive: false,
-                    tasks: {
+                    title: null, buttonDeleteTaskActive: false, tasks: {
                         task1: {
-                            name: null,
-                            activity: false
-                        },
-                        task2: {
-                            name: null,
-                            activity: false
-                        },
-                        task3: {
-                            name: null,
-                            activity: false
-                        },
-                        task4: {
-                            name: null,
-                            activity: false
-                        },
-                        task5: {
-                            name: null,
-                            activity: false
+                            name: null, activity: false
+                        }, task2: {
+                            name: null, activity: false
+                        }, task3: {
+                            name: null, activity: false
+                        }, task4: {
+                            name: null, activity: false
+                        }, task5: {
+                            name: null, activity: false
                         },
                     }
                 }
-                eventBus.$emit('takeFromForm', copy);
+                eventBus.$emit('take-from-form', copy);
                 eventBus.$emit('yes-no-block-form');
             }
         }
 
-    },
-    mounted() {
-        setTimeout(()=>{eventBus.$emit('yes-no-block-form');},100)
+    }, mounted() {
+        setTimeout(() => {
+            eventBus.$emit('yes-no-block-form');
+        }, 100)
 
 
         eventBus.$on('say-me-count-first-resp', function (len) {
             this.countInFirst = len;
 
-            if( this.countInFirst ==3){
+            if (this.countInFirst == 3) {
                 this.isActiveForm = true;
             }
         }.bind(this)),
 
-            eventBus.$on('block-form-please', ()=>{
+            eventBus.$on('block-form-please', () => {
                 this.isActiveForm = false;
             }),
 
-            eventBus.$on('unblock-form-please', ()=>{
+            eventBus.$on('unblock-form-please', () => {
                 this.isActiveForm = true;
             })
     }
 })
 
 let app = new Vue({
-    el: '#app',
+    el: '#app', mounted() {
+        eventBus.$on('save-me-in-storage', (key, value) => {
+            localStorage.setItem(key, JSON.stringify(value));
+        })
+    }
 })
